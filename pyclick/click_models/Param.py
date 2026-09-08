@@ -6,7 +6,7 @@
 from abc import abstractmethod
 from collections import defaultdict
 
-__author__ = 'Ilya Markov'
+__author__ = "Ilya Markov"
 
 
 class Param(object):
@@ -14,9 +14,9 @@ class Param(object):
 
     def __str__(self):
         if self.value():
-            return '%.4f' % self.value()
+            return "%.4f" % self.value()
         else:
-            return 'None'
+            return "None"
 
     def __repr__(self):
         return str(self)
@@ -79,6 +79,10 @@ class ParamMLE(Param):
         return self
 
 
+class ParamMLENonLinear(Param):
+    pass
+
+
 class ParamEM(Param):
     """A parameter used in the expectation-maximization inference."""
 
@@ -104,8 +108,12 @@ class ParamEM(Param):
             (or the default values are used in case this is the first iteration).
         """
         if self._is_update_needed(search_session, rank):
-            self._numerator += self._get_numerator_update(search_session, rank, session_params)
-            self._denominator += self._get_denominator_update(search_session, rank, session_params)
+            self._numerator += self._get_numerator_update(
+                search_session, rank, session_params
+            )
+            self._denominator += self._get_denominator_update(
+                search_session, rank, session_params
+            )
 
     @classmethod
     def _get_numerator_update(cls, search_session, rank, session_params):
