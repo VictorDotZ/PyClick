@@ -26,6 +26,15 @@ from pyclick.utils.YandexRelPredChallengeParser import YandexRelPredChallengePar
 __author__ = 'Ilya Markov'
 
 
+def get_sids(path):
+    sids = set()
+    with open(path, "r", encoding="utf-8") as f_in:
+        for line in f_in:
+            line = line.strip()
+            sids.add(line)
+            
+    return sids
+
 if __name__ == "__main__":
     print("===============================")
     print("This is an example of using PyClick for training and testing click models.")
@@ -38,18 +47,28 @@ if __name__ == "__main__":
         print("\tsessions_max - the maximum number of one-query search sessions to consider")
         print("")
         sys.exit(1)
+        
+    train_sids = get_sids("./examples/data/VK_train_sid.txt")
+    test_sids = get_sids("./examples/data/VK_test_sid.txt")
+    
+    print(len(train_sids), len(test_sids))
+    raise Exception
 
     click_model = globals()[sys.argv[1]]()
     search_sessions_path = sys.argv[2]
-    search_sessions_num = int(sys.argv[3])
+    try:
+        search_sessions_num = int(sys.argv[3])
+    except:
+        search_sessions_num = None
 
     search_sessions = YandexRelPredChallengeParser().parse(search_sessions_path, search_sessions_num)
 
-    train_test_split = int(len(search_sessions) * 0.75)
-    train_sessions = search_sessions[:train_test_split]
+    # train_test_split = int(len(search_sessions) * 0.75)
+    train_sessions = list(filter(lambda session: session.task in train_sids, search_sessions))
     train_queries = Utils.get_unique_queries(train_sessions)
 
-    test_sessions = Utils.filter_sessions(search_sessions[train_test_split:], train_queries)
+    test_sessions = list(filter(lambda session: session.task in test_sids, search_sessions))
+    test_sessions = Utils.filter_sessions(test_sessions, train_queries)
     test_queries = Utils.get_unique_queries(test_sessions)
 
     print("===============================")
@@ -59,7 +78,7 @@ if __name__ == "__main__":
     start = time.time()
     click_model.train(train_sessions)
     end = time.time()
-    print("\tTrained %s click model in %i secs:\n%r" % (click_model.__class__.__name__, end - start, click_model))
+    print("\tTrained %s click model in %i secs:\n" % (click_model.__class__.__name__, end - start))
 
     print("-------------------------------")
     print("Testing on %d search sessions (%d unique queries)." % (len(test_sessions), len(test_queries)))
